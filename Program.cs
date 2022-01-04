@@ -1,3 +1,7 @@
+using DatasetsBackend.Data;
+using Microsoft.EntityFrameworkCore;
+
+
 namespace DatasetsBackend
 {
     public class Program
@@ -22,6 +26,9 @@ namespace DatasetsBackend
             builder.Configuration.AddJsonFile(jsonFileName, optional: true, reloadOnChange: true);
 
             var connectionString = builder.Configuration.GetConnectionString("DatasetsBackendDbContext");
+
+            builder.Services.AddDbContext<DatasetesBackendDbContext>(options =>
+                options.UseSqlServer(connectionString));
 
             builder.Services.AddEndpointsApiExplorer();
 
