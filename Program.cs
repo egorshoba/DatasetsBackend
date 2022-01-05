@@ -1,4 +1,6 @@
+using DatasetsBackend.Controllers;
 using DatasetsBackend.Data;
+using DatasetsBackend.Dtos;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -10,7 +12,7 @@ namespace DatasetsBackend
         {
             var app = BuildWebApplication(args);
 
-            app.MapGet("/", () => "Hello World!");
+            app.MapPost("/api/dataset/upload", DatasetsController.Upload).Accepts<UploadDatasetDto>("multipart/form-data");
 
             app.Run();
         }
