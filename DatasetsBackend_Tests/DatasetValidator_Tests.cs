@@ -22,19 +22,28 @@ namespace DatasetsBackend_Tests
         }
 
         [Fact]
-        public void NameIsLatin()
+        public void AllValid()
         {
+            var filePath = "oknew.zip";
+
+            using var stream = System.IO.File.OpenRead(filePath);
+
+            var file = new FormFile(stream, 0, stream.Length, "oknew.zip", "oknew.zip");
+
             var dto = new UploadDatasetDto
             {
                 Name = "Test",
-                ContainsCyrillic = true
+                ContainsCyrillic = true,
             };
 
-            var validator = new DatasetValidator(dto, File);
+            var validator = new DatasetValidator(dto, file);
 
             var validationErrors = validator.GetValidationErrors();
 
+            var datasetSize = validator.GetDatasetSize();
+
             Assert.Empty(validationErrors);
+            Assert.True(datasetSize > 0);
         }
 
         [Fact]

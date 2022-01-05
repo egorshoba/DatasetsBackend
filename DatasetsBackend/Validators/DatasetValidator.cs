@@ -1,4 +1,5 @@
 ﻿using DatasetsBackend.Dtos;
+using System.IO.Compression;
 using System.Text.RegularExpressions;
 
 namespace DatasetsBackend.Validators
@@ -56,6 +57,14 @@ namespace DatasetsBackend.Validators
                 && !DatasetMetadata.ContainsLatin)
             {
                 Errors.Add("Dataset should contain cyrillic/latin chars or digits");
+            }
+        }
+        public int GetDatasetSize()
+        {
+            using (var stream = File.OpenReadStream())
+            using (var archive = new ZipArchive(stream))
+            {
+                return archive.Entries.Count;
             }
         }
     }
