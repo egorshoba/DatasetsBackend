@@ -1,6 +1,7 @@
 using DatasetsBackend.Controllers;
 using DatasetsBackend.Data;
 using DatasetsBackend.Dtos;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -11,6 +12,7 @@ namespace DatasetsBackend
         public static void Main(string[] args)
         {
             var app = BuildWebApplication(args);
+
 
             app.MapPost("/api/dataset/upload", DatasetsController.Upload).Accepts<UploadDatasetDto>("multipart/form-data");
 
@@ -34,6 +36,10 @@ namespace DatasetsBackend
 
             builder.Services.AddEndpointsApiExplorer();
 
+            builder.Services.Configure<KestrelServerOptions>(options =>
+            {
+                options.Limits.MaxRequestBodySize = int.MaxValue; // if don't set default value is: 30 MB
+            });
             return builder.Build();
         }
     }
