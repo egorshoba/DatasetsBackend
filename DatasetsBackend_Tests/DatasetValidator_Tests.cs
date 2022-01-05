@@ -1,12 +1,7 @@
 ﻿using DatasetsBackend.Dtos;
 using DatasetsBackend.Validators;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace DatasetsBackend_Tests
@@ -17,48 +12,66 @@ namespace DatasetsBackend_Tests
 
         public DatasetValidator_Tests()
         {
-            var bytes = Encoding.UTF8.GetBytes("This is a dummy file");
-            File = new FormFile(new MemoryStream(bytes), 0, bytes.Length, "Data", "dummy.txt");
+            var filePath = "oknew.zip";
+
+            var stream = System.IO.File.OpenRead(filePath);
+
+            File = new FormFile(stream, 0, stream.Length, "oknew.zip", "oknew.zip");
         }
 
         [Fact]
         public void AllValid()
         {
-            var filePath = "oknew.zip";
-
-            using var stream = System.IO.File.OpenRead(filePath);
-
-            var file = new FormFile(stream, 0, stream.Length, "oknew.zip", "oknew.zip");
-
             var dto = new UploadDatasetDto
             {
                 Name = "Test",
                 ContainsCyrillic = true,
-            };
-
-            var validator = new DatasetValidator(dto, file);
-
-            var validationErrors = validator.GetValidationErrors();
-
-            var datasetSize = validator.GetDatasetSize();
-
-            Assert.Empty(validationErrors);
-            Assert.True(datasetSize > 0);
-        }
-
-        [Fact]
-        public void NameIsNotLatin()
-        {
-            var dto = new UploadDatasetDto
-            {
-                Name = "teыt"
+                CaseSensitive = true,
+                ContainsLatin = true,
+                AnswersLocation = DatasetsBackend.Data.AnswersLocation.SeparateFile
             };
 
             var validator = new DatasetValidator(dto, File);
 
             var validationErrors = validator.GetValidationErrors();
 
-            Assert.Collection(validationErrors, item => Assert.Contains("Name should contain only latin chars", item));
+            Assert.Empty(validationErrors);
+        }
+
+
+        [Fact]
+        public void DatasetTooLarge()
+        {
+            var dto = new UploadDatasetDto
+            {
+                Name = "Test",
+                ContainsCyrillic = true,
+                CaseSensitive = true
+            };
+
+            var validator = new DatasetValidator(dto, File);
+
+            var validationErrors = validator.GetValidationErrors();
+
+            Assert.Contains(validationErrors, m => m == "Dataset's size should be between 8000 and 9000");
+        }
+        [Fact]
+        public void NameIsNotLatin()
+        {
+            var dto = new UploadDatasetDto
+            {
+                Name = "teыt",
+                ContainsCyrillic = true,
+                CaseSensitive = true,
+                ContainsLatin = true,
+                AnswersLocation = DatasetsBackend.Data.AnswersLocation.SeparateFile
+            };
+
+            var validator = new DatasetValidator(dto, File);
+
+            var validationErrors = validator.GetValidationErrors();
+
+            Assert.Contains(validationErrors, m => m == "Name should contain only latin chars");
         }
 
         [Fact]
@@ -66,14 +79,18 @@ namespace DatasetsBackend_Tests
         {
             var dto = new UploadDatasetDto
             {
-                Name = "Test1"
+                Name = "Test1",
+                ContainsCyrillic = true,
+                CaseSensitive = true,
+                ContainsLatin = true,
+                AnswersLocation = DatasetsBackend.Data.AnswersLocation.SeparateFile
             };
 
             var validator = new DatasetValidator(dto, File);
 
             var validationErrors = validator.GetValidationErrors();
 
-            Assert.Collection(validationErrors, item => Assert.Contains("Name should contain only latin chars", item));
+            Assert.Contains(validationErrors, m => m == "Name should contain only latin chars");
         }
 
         [Fact]
@@ -81,14 +98,18 @@ namespace DatasetsBackend_Tests
         {
             var dto = new UploadDatasetDto
             {
-                Name = "CaPtChas"
+                Name = "CaPtChas",
+                ContainsCyrillic = true,
+                CaseSensitive = true,
+                ContainsLatin = true,
+                AnswersLocation = DatasetsBackend.Data.AnswersLocation.SeparateFile
             };
 
             var validator = new DatasetValidator(dto, File);
 
             var validationErrors = validator.GetValidationErrors();
 
-            Assert.Collection(validationErrors, item => Assert.Contains("Name should not contain word captcha", item));
+            Assert.Contains(validationErrors, m => m == "Name should not contain word captcha");
         }
 
         [Fact]
@@ -96,14 +117,18 @@ namespace DatasetsBackend_Tests
         {
             var dto = new UploadDatasetDto
             {
-                Name = new string('a', 10)
+                Name = new string('a', 10),
+                ContainsCyrillic = true,
+                CaseSensitive = true,
+                ContainsLatin = true,
+                AnswersLocation = DatasetsBackend.Data.AnswersLocation.SeparateFile
             };
 
             var validator = new DatasetValidator(dto, File);
 
             var validationErrors = validator.GetValidationErrors();
 
-            Assert.Collection(validationErrors, item => Assert.Contains("Name length should be between 4 and 8", item));
+            Assert.Contains(validationErrors, m => m == "Name length should be between 4 and 8");
         }
 
         [Fact]
@@ -111,14 +136,17 @@ namespace DatasetsBackend_Tests
         {
             var dto = new UploadDatasetDto
             {
-                Name = "Test"
+                Name = "Test",             
+                CaseSensitive = true,
+                ContainsSpecChars = true,
+                AnswersLocation = DatasetsBackend.Data.AnswersLocation.SeparateFile
             };
 
             var validator = new DatasetValidator(dto, File);
 
             var validationErrors = validator.GetValidationErrors();
 
-            Assert.Collection(validationErrors, item => Assert.Contains("Dataset should contain cyrillic/latin chars or digits", item));
+            Assert.Contains(validationErrors, m => m == "Dataset should contain cyrillic/latin chars or digits");
         }
     }
 }

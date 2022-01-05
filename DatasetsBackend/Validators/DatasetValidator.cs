@@ -8,13 +8,21 @@ namespace DatasetsBackend.Validators
     {
         readonly UploadDatasetDto DatasetMetadata;
         readonly IFormFile File;
-        List<string> Errors;
+        readonly List<string> Errors;
+        List<string> FileNames;
 
         public DatasetValidator(UploadDatasetDto datasetMetadata, IFormFile file)
         {
             DatasetMetadata = datasetMetadata;
             File = file;
             Errors = new();
+            FileNames = new();
+
+            using var stream = File.OpenReadStream();
+            using var archive = new ZipArchive(stream);
+            foreach (var entry in archive.Entries)
+                FileNames.Add(entry.Name);
+            
         }
 
         public IEnumerable<string> GetValidationErrors()
@@ -23,6 +31,8 @@ namespace DatasetsBackend.Validators
             DoesntContainCaptcha();
             NameLength();
             CharTypeChosen();
+            DatasetSizeCheck();
+            AnswerFileExists();
             return Errors;
         }
 
@@ -59,13 +69,59 @@ namespace DatasetsBackend.Validators
                 Errors.Add("Dataset should contain cyrillic/latin chars or digits");
             }
         }
-        public int GetDatasetSize()
+
+
+        void DatasetSizeCheck()
         {
-            using (var stream = File.OpenReadStream())
-            using (var archive = new ZipArchive(stream))
-            {
-                return archive.Entries.Count;
-            }
+            const int maxOffset = 1000;
+
+            int minSize = GetMinDatasetSize();
+
+            int maxSize = minSize + maxOffset;
+
+            int actualSize = GetDatasetSize();
+
+            if (actualSize < minSize
+                || actualSize > maxSize)
+                Errors.Add($"Dataset's size should be between {minSize} and {maxSize}");
         }
+
+        void AnswerFileExists()
+        {
+            const string answerFile = "answers.txt";
+            if (!FileNames.Contains(answerFile)
+                && DatasetMetadata.AnswersLocation == Data.AnswersLocation.SeparateFile)
+                Errors.Add($"Dataset should contain {answerFile}");
+        }
+
+        int GetMinDatasetSize()
+        {
+            const int startMinSize = 2000;
+            const int modifier = 3000;
+
+            int minSize = startMinSize;
+
+            if (DatasetMetadata.ContainsCyrillic)
+                minSize += modifier;
+
+            if (DatasetMetadata.ContainsLatin)
+                minSize += modifier;
+
+            if (DatasetMetadata.ContainsDigits)
+                minSize += modifier;
+
+            if (DatasetMetadata.CaseSensitive)
+                minSize += modifier;
+
+            if (DatasetMetadata.ContainsSpecChars)
+                minSize += modifier;
+
+            return minSize;
+        }
+
+        public int GetDatasetSize() => FileNames.Count;
+
+
+
     }
 }
