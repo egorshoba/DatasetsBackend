@@ -20,6 +20,8 @@ namespace DatasetsBackend.Validators
         {
             NameIsLatin();
             DoesntContainCaptcha();
+            NameLength();
+            CharTypeChosen();
             return Errors;
         }
 
@@ -35,6 +37,26 @@ namespace DatasetsBackend.Validators
             const string forbiddenWord = "captcha";
             if (DatasetMetadata.Name.ToLower().Contains(forbiddenWord))
                 Errors.Add($"Name should not contain word {forbiddenWord}");
+        }
+
+        void NameLength()
+        {
+            const int minLength = 4;
+            const int maxLength = 8;
+
+            if (DatasetMetadata.Name.Length < minLength
+                || DatasetMetadata.Name.Length > maxLength)
+                Errors.Add($"Name length should be between {minLength} and {maxLength}");
+        }
+
+        void CharTypeChosen()
+        {
+            if (!DatasetMetadata.ContainsDigits 
+                && !DatasetMetadata.ContainsCyrillic 
+                && !DatasetMetadata.ContainsLatin)
+            {
+                Errors.Add("Dataset should contain cyrillic/latin chars or digits");
+            }
         }
     }
 }

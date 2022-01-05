@@ -26,7 +26,8 @@ namespace DatasetsBackend_Tests
         {
             var dto = new UploadDatasetDto
             {
-                Name = "Test"
+                Name = "Test",
+                ContainsCyrillic = true
             };
 
             var validator = new DatasetValidator(dto, File);
@@ -79,6 +80,36 @@ namespace DatasetsBackend_Tests
             var validationErrors = validator.GetValidationErrors();
 
             Assert.Collection(validationErrors, item => Assert.Contains("Name should not contain word captcha", item));
+        }
+
+        [Fact]
+        public void NameLengthInvalid()
+        {
+            var dto = new UploadDatasetDto
+            {
+                Name = new string('a', 10)
+            };
+
+            var validator = new DatasetValidator(dto, File);
+
+            var validationErrors = validator.GetValidationErrors();
+
+            Assert.Collection(validationErrors, item => Assert.Contains("Name length should be between 4 and 8", item));
+        }
+
+        [Fact]
+        public void ChosenCharTypesInvalid()
+        {
+            var dto = new UploadDatasetDto
+            {
+                Name = "Test"
+            };
+
+            var validator = new DatasetValidator(dto, File);
+
+            var validationErrors = validator.GetValidationErrors();
+
+            Assert.Collection(validationErrors, item => Assert.Contains("Dataset should contain cyrillic/latin chars or digits", item));
         }
     }
 }
