@@ -1,8 +1,7 @@
-﻿using DatasetsBackend.Data;
-using DatasetsBackend.Dtos;
+﻿using DatasetsBackend.Dtos;
 using DatasetsBackend.Helpers;
+using DatasetsBackend.Validators;
 using Microsoft.AspNetCore.Mvc;
-using System.IO.Compression;
 
 namespace DatasetsBackend.Controllers
 {
@@ -13,25 +12,34 @@ namespace DatasetsBackend.Controllers
         [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         public static IResult Upload(HttpRequest request)
         {
-            var form = request.ReadFormAsync().Result;
-
-            var model = CustomDeserializer.DeserializeForm<UploadDatasetDto>(form);
-
-            var formFile = form.Files["File"];
-
-            if (formFile is null || formFile.Length == 0)
-                return Results.BadRequest();
-
-
-            using (var stream = formFile.OpenReadStream())
-            using (var archive = new ZipArchive(stream))
+            try
             {
-                var innerFile = archive.GetEntry("answers.txt");
-                // do something with the inner file
+                var form = request.ReadFormAsync().Result;
+
+                var datasetMetadata = CustomDeserializer.DeserializeForm<UploadDatasetDto>(form);
+
+                var formFile = form.Files["File"];
+
+                if (formFile is null || formFile.Length == 0)
+                    return Results.BadRequest();
+
+                var validator = new DatasetValidator(datasetMetadata, formFile);
+
+                var validationErrors = validator.GetValidationErrors();
+
+                if (validationErrors.Any())
+                {
+                    return Results.BadRequest(new { validationErrors });
+                }
+
+                return Results.NoContent();
+            }
+            catch (Exception)
+            {
+
+                throw;
             }
 
-
-            return Results.Ok();
         }
     }
 }
