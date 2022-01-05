@@ -10,6 +10,7 @@ namespace DatasetsBackend.Validators
         readonly IFormFile File;
         readonly List<string> Errors;
         List<string> FileNames;
+        const string AnswersFileName = "answers.txt";
 
         public DatasetValidator(UploadDatasetDto datasetMetadata, IFormFile file)
         {
@@ -22,7 +23,7 @@ namespace DatasetsBackend.Validators
             using var archive = new ZipArchive(stream);
             foreach (var entry in archive.Entries)
                 FileNames.Add(entry.Name);
-            
+
         }
 
         public IEnumerable<string> GetValidationErrors()
@@ -32,7 +33,8 @@ namespace DatasetsBackend.Validators
             NameLength();
             CharTypeChosen();
             DatasetSizeCheck();
-            AnswerFileExists();
+            CheckFileTypes();
+            AnswerFileCorrect();
             return Errors;
         }
 
@@ -62,14 +64,13 @@ namespace DatasetsBackend.Validators
 
         void CharTypeChosen()
         {
-            if (!DatasetMetadata.ContainsDigits 
-                && !DatasetMetadata.ContainsCyrillic 
+            if (!DatasetMetadata.ContainsDigits
+                && !DatasetMetadata.ContainsCyrillic
                 && !DatasetMetadata.ContainsLatin)
             {
                 Errors.Add("Dataset should contain cyrillic/latin chars or digits");
             }
         }
-
 
         void DatasetSizeCheck()
         {
@@ -86,12 +87,43 @@ namespace DatasetsBackend.Validators
                 Errors.Add($"Dataset's size should be between {minSize} and {maxSize}");
         }
 
-        void AnswerFileExists()
+        void CheckFileTypes()
         {
-            const string answerFile = "answers.txt";
-            if (!FileNames.Contains(answerFile)
-                && DatasetMetadata.AnswersLocation == Data.AnswersLocation.SeparateFile)
-                Errors.Add($"Dataset should contain {answerFile}");
+            var imageExtensions = new[] { ".jpg", ".png", ".jpeg" };
+
+            foreach (var fileName in FileNames.Where(m => m != AnswersFileName))
+                if (!imageExtensions.Any(fileName.Contains))
+                {
+                    Errors.Add($"Dataset should contain only images");
+                    return;
+                }
+        }
+
+        void AnswerFileCorrect()
+        {
+            if (DatasetMetadata.AnswersLocation == Data.AnswersLocation.SeparateFile)
+            {
+                if (!FileNames.Contains(AnswersFileName))
+                {
+                    Errors.Add($"Dataset should contain {AnswersFileName}");
+                    return;
+                }
+
+                using var stream = File.OpenReadStream();
+                using var archive = new ZipArchive(stream);
+
+                var answersEntry = archive.GetEntry(AnswersFileName);
+                if (answersEntry is not null)
+                {
+                    var ansFileReader = new StreamReader(answersEntry.Open());
+                    var allText = ansFileReader.ReadToEnd();
+                    var lines = allText.TrimEnd().Split(new char[] { '\n' });
+                    var linesAmount = lines.Length;
+
+                    if (FileNames.Count - 1 != linesAmount)
+                        Errors.Add($"Answers amount doesn't equal to images amount");
+                }
+            }
         }
 
         int GetMinDatasetSize()
@@ -119,9 +151,6 @@ namespace DatasetsBackend.Validators
             return minSize;
         }
 
-        public int GetDatasetSize() => FileNames.Count;
-
-
-
+        public int GetDatasetSize() => FileNames.Count - 1;
     }
 }
