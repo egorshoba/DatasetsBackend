@@ -19,6 +19,7 @@ namespace DatasetsBackend.Validators
         public IEnumerable<string> GetValidationErrors()
         {
             NameIsLatin();
+            DoesntContainCaptcha();
             return Errors;
         }
 
@@ -26,9 +27,14 @@ namespace DatasetsBackend.Validators
         {
             var regex = new Regex(@"^[A-z]+$", RegexOptions.IgnoreCase);
             if (!regex.IsMatch(DatasetMetadata.Name))
-            {
                 Errors.Add("Name should contain only latin chars");
-            }
+        }
+
+        void DoesntContainCaptcha()
+        {
+            const string forbiddenWord = "captcha";
+            if (DatasetMetadata.Name.ToLower().Contains(forbiddenWord))
+                Errors.Add($"Name should not contain word {forbiddenWord}");
         }
     }
 }

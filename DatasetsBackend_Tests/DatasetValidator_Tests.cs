@@ -65,5 +65,20 @@ namespace DatasetsBackend_Tests
 
             Assert.Collection(validationErrors, item => Assert.Contains("Name should contain only latin chars", item));
         }
+
+        [Fact]
+        public void NameContainsCaptcha()
+        {
+            var dto = new UploadDatasetDto
+            {
+                Name = "CaPtChas"
+            };
+
+            var validator = new DatasetValidator(dto, File);
+
+            var validationErrors = validator.GetValidationErrors();
+
+            Assert.Collection(validationErrors, item => Assert.Contains("Name should not contain word captcha", item));
+        }
     }
 }
