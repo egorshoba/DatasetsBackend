@@ -3,7 +3,6 @@ using DatasetsBackend.Dtos;
 using DatasetsBackend.Helpers;
 using DatasetsBackend.Validators;
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
 
 namespace DatasetsBackend.Controllers
 {
@@ -47,6 +46,23 @@ namespace DatasetsBackend.Controllers
             catch (ArgumentException ex)
             {
                 return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return Results.Problem("Unknown error");
+            }
+        }
+
+        public static IResult List(DatasetesBackendDbContext db)
+        {
+            try
+            {
+                var result = db.Datasets
+                    .AsQueryable()
+                    .Select(s => new DatasetItem(s));
+
+                return Results.Ok(result);
             }
             catch (Exception ex)
             {

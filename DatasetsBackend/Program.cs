@@ -15,6 +15,8 @@ namespace DatasetsBackend
 
             app.MapPost("/api/dataset/upload", DatasetsController.Upload).Accepts<UploadDatasetDto>("multipart/form-data");
 
+            app.MapGet("/api/dataset/list", DatasetsController.List);
+
             app.Run();
         }
 
