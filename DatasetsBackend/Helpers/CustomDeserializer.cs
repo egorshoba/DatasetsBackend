@@ -21,13 +21,35 @@ namespace DatasetsBackend.Helpers
                     castedValue = (string)value;
 
                 if (property.PropertyType == typeof(bool))
-                    castedValue = bool.Parse(value.ToString());
+                {
+                    var boolParsed = bool.TryParse(value.ToString(), out bool boolParsedValue);
+
+                    if (boolParsed)
+                        castedValue = boolParsedValue;
+                    else
+                        throw new ArgumentException($"{property.Name} is in wrong format");
+                }
 
                 if (property.PropertyType == typeof(DateTime))
-                    castedValue = DateTime.Parse(value.ToString());
+                {
+                    var dateParsed = DateTime.TryParse(value.ToString(), out DateTime parsedDateValue);
+
+                    if (dateParsed)
+                        castedValue = parsedDateValue;
+                    else
+                        throw new ArgumentException($"{property.Name} is in wrong format");
+                }
 
                 if (property.PropertyType == typeof(AnswersLocation))
-                    castedValue = (AnswersLocation)Enum.Parse(typeof(AnswersLocation), value.ToString());
+                {
+                    var enumParsed = Enum.TryParse(value.ToString(), true, out AnswersLocation enumParsedValue);
+
+                    if (enumParsed)
+                        castedValue = enumParsedValue;
+
+                    else
+                        throw new ArgumentException($"{property.Name} is in wrong format");
+                }
 
                 try
                 {

@@ -19,11 +19,18 @@ namespace DatasetsBackend.Validators
             Errors = new();
             FileNames = new();
 
-            using var stream = File.OpenReadStream();
-            using var archive = new ZipArchive(stream);
-            foreach (var entry in archive.Entries)
-                FileNames.Add(entry.Name);
-
+            try
+            {
+                using var stream = File.OpenReadStream();
+                using var archive = new ZipArchive(stream);
+                foreach (var entry in archive.Entries)
+                    FileNames.Add(entry.Name);
+            }
+            catch (InvalidDataException ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw new ArgumentException("Unable to open the archive");
+            }
         }
 
         public IEnumerable<string> GetValidationErrors()

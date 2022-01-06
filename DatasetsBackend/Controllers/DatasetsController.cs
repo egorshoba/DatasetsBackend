@@ -21,25 +21,26 @@ namespace DatasetsBackend.Controllers
                 var formFile = form.Files["File"];
 
                 if (formFile is null || formFile.Length == 0)
-                    return Results.BadRequest();
+                    return Results.BadRequest(new { error = "File is required" });
 
                 var validator = new DatasetValidator(datasetMetadata, formFile);
 
                 var validationErrors = validator.GetValidationErrors();
 
                 if (validationErrors.Any())
-                {
                     return Results.BadRequest(new { validationErrors });
-                }
 
                 return Results.NoContent();
             }
-            catch (Exception)
+            catch (ArgumentException ex)
             {
-
-                throw;
+                return Results.BadRequest(new { error = ex.Message });
             }
-
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return Results.Problem("Unknown error");
+            }
         }
     }
 }

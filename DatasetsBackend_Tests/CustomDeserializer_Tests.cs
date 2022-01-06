@@ -40,5 +40,71 @@ namespace DatasetsBackend_Tests
             Assert.True(deserilizedModel.CaseSensitive);
             Assert.Equal(DatasetsBackend.Data.AnswersLocation.SeparateFile, deserilizedModel.AnswersLocation);
         }
+        [Fact]
+        public void InvalidDate()
+        {
+            var dictionary = new Dictionary<string, StringValues>();
+
+            var invalidDate = "!2022-01-05T12:02:00";
+
+            dictionary.Add("Name", "Dataset name");
+            dictionary.Add("CreateDate", invalidDate);
+            dictionary.Add("ContainsCyrillic", "true");
+            dictionary.Add("ContainsLatin", "true");
+            dictionary.Add("ContainsDigits", "false");
+            dictionary.Add("ContainsSpecChars", "false");
+            dictionary.Add("CaseSensitive", "true");
+            dictionary.Add("AnswersLocation", "SeparateFile");
+
+            var form = new FormCollection(dictionary);
+
+            var exception = Assert.Throws<ArgumentException>(() => CustomDeserializer.DeserializeForm<UploadDatasetDto>(form));
+
+            Assert.Equal("CreateDate is in wrong format", exception.Message);
+        }
+        [Fact]
+        public void InvalidBool()
+        {
+            var dictionary = new Dictionary<string, StringValues>();
+
+            var invalidDate = "2022-01-05T12:02:00";
+
+            dictionary.Add("Name", "Dataset name");
+            dictionary.Add("CreateDate", invalidDate);
+            dictionary.Add("ContainsCyrillic", "da");
+            dictionary.Add("ContainsLatin", "true");
+            dictionary.Add("ContainsDigits", "false");
+            dictionary.Add("ContainsSpecChars", "false");
+            dictionary.Add("CaseSensitive", "true");
+            dictionary.Add("AnswersLocation", "SeparateFile");
+
+            var form = new FormCollection(dictionary);
+
+            var exception = Assert.Throws<ArgumentException>(() => CustomDeserializer.DeserializeForm<UploadDatasetDto>(form));
+
+            Assert.Equal("ContainsCyrillic is in wrong format", exception.Message);
+        }
+        [Fact]
+        public void InvalidEnum()
+        {
+            var dictionary = new Dictionary<string, StringValues>();
+
+            var invalidDate = "2022-01-05T12:02:00";
+
+            dictionary.Add("Name", "Dataset name");
+            dictionary.Add("CreateDate", invalidDate);
+            dictionary.Add("ContainsCyrillic", "true");
+            dictionary.Add("ContainsLatin", "true");
+            dictionary.Add("ContainsDigits", "false");
+            dictionary.Add("ContainsSpecChars", "false");
+            dictionary.Add("CaseSensitive", "true");
+            dictionary.Add("AnswersLocation", "No_File");
+
+            var form = new FormCollection(dictionary);
+
+            var exception = Assert.Throws<ArgumentException>(() => CustomDeserializer.DeserializeForm<UploadDatasetDto>(form));
+
+            Assert.Equal("AnswersLocation is in wrong format", exception.Message);
+        }
     }
 }
