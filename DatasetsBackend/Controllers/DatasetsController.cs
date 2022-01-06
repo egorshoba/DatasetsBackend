@@ -1,7 +1,9 @@
-﻿using DatasetsBackend.Dtos;
+﻿using DatasetsBackend.Data;
+using DatasetsBackend.Dtos;
 using DatasetsBackend.Helpers;
 using DatasetsBackend.Validators;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 
 namespace DatasetsBackend.Controllers
 {
@@ -10,7 +12,7 @@ namespace DatasetsBackend.Controllers
         [Consumes("multipart/form-data")]
         [DisableRequestSizeLimit]
         [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
-        public static IResult Upload(HttpRequest request)
+        public static async Task<IResult> Upload(HttpRequest request, DatasetesBackendDbContext db)
         {
             try
             {
@@ -29,6 +31,16 @@ namespace DatasetsBackend.Controllers
 
                 if (validationErrors.Any())
                     return Results.BadRequest(new { validationErrors });
+
+                var datasetRecord = DatasetFactory.GetDataset(datasetMetadata);
+                db.Datasets.Add(datasetRecord);
+                db.SaveChanges();
+
+                string filePath = Path.Combine("uploads", $"{datasetRecord.Id}_{formFile.FileName}");
+                using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await formFile.CopyToAsync(fileStream);
+                }
 
                 return Results.NoContent();
             }

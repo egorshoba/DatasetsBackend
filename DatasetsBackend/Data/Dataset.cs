@@ -19,8 +19,7 @@
 
         public AnswersLocation AnswersLocation { get; set; }
 
-        public DateTime UploadDate { get; set; }
-
+        public DateTime UploadDate { get; set; } = DateTime.UtcNow;
     }
 
     public enum AnswersLocation
